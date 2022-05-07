@@ -7,9 +7,12 @@ use std::env;
 mod commands;
 
 use commands::music;
+use commands::random;
 use commands::subject;
 use commands::then;
 
+use commands::uwu;
+use poise::serenity_prelude::ApplicationCommand;
 use poise::serenity_prelude::UserId;
 use serenity::http::Http;
 
@@ -39,6 +42,35 @@ async fn register(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
     Ok(())
 }
 
+#[poise::command(prefix_command, check = "is_owner", hide_in_help)]
+async fn unregister(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
+    if global {
+        ctx.say(format!("Unregistering commands globally"))
+        .await?;
+    ApplicationCommand::set_global_application_commands(ctx.discord(), |b| {
+b.set_application_commands(vec![])
+    }).await?;
+}
+else {
+    let guild = match ctx.guild() {
+        Some(x) => x,
+        None => {
+            ctx.say("Must be called in guild").await?;
+            return Ok(());
+        }
+    };
+    ctx.say(format!("Unregistering commands"))
+        .await?;
+    guild
+        .set_application_commands(ctx.discord(), |b| {
+            b.set_application_commands(vec![])
+        })
+        .await?;
+}
+    Ok(())
+}
+
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt::init();
@@ -46,6 +78,7 @@ async fn main() -> Result<(), Error> {
     let options = poise::FrameworkOptions {
         commands: vec![
             register(),
+            unregister(),
             then::then_msg(),
             then::then_text(),
             then::enth_msg(),
@@ -57,6 +90,15 @@ async fn main() -> Result<(), Error> {
             music::stop(),
             music::leave(),
             subject::subject(),
+            random::random(),
+            poise::Command {
+                subcommands: vec![
+            uwu::uwu(),
+            uwu::owo(),
+            uwu::uvu(),
+                ],
+                ..uwu::uwuify()
+            }
         ],
         on_error: |error| Box::pin(on_error(error)),
         prefix_options: poise::PrefixFrameworkOptions {

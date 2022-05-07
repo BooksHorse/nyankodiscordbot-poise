@@ -834,7 +834,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "owoify_rs",
  "poise",
+ "rand",
+ "rand_chacha",
  "serenity",
  "songbird",
  "subjectlib",
@@ -865,6 +868,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7940cf2ca942593318d07fcf2596cdca60a85c9e7fab408a5e21a4f9dcd40d87"
 dependencies = [
  "num-traits 0.2.15",
+]
+
+[[package]]
+name = "owoify_rs"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60cff2350875a9ccee0655bc548b37bbb35cb1a95697e587a1e06639c08e677b"
+dependencies = [
+ "lazy_static",
+ "rand",
+ "regex",
 ]
 
 [[package]]

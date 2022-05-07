@@ -45,7 +45,7 @@ pub async fn play_internal(ctx: Context<'_>, query: String) -> Result<(), Error>
 
         match Url::parse(&query) {
             Ok(url) => {
-                if url.host_str().unwrap() == "youtube.com" || url.host_str().unwrap() == "youtu.be"
+                if url.host_str().unwrap() == "youtube.com" || url.host_str().unwrap() == "youtu.be" ||  url.host_str().unwrap() == "www.youtube.com" 
                 {
                     //url.to_string();
                     let source = match Restartable::ytdl(url, true).await {
@@ -199,6 +199,10 @@ pub async fn join_internal(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+
+/// Leaves your current voice channel
+///
+/// /leaves
 #[poise::command(prefix_command, slash_command, guild_only)]
 pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx.guild().unwrap();
@@ -230,6 +234,9 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Skip songs n times
+///
+/// /skip [times]
 #[poise::command(prefix_command, slash_command, guild_only)]
 pub async fn skip(
     ctx: Context<'_>,
@@ -261,6 +268,9 @@ pub async fn skip(
     Ok(())
 }
 
+/// Stops music
+///
+/// /stop
 #[poise::command(prefix_command, slash_command, guild_only)]
 pub async fn stop(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx.guild().unwrap();
@@ -284,6 +294,9 @@ pub async fn stop(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Lists current queue
+///
+/// /queue
 #[poise::command(prefix_command, slash_command, guild_only)]
 pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx.guild().unwrap();
