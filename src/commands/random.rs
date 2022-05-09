@@ -23,6 +23,6 @@ pub async fn random(
     //let mut rng = rand::thread_rng();
     let mut rng = ChaCha20Rng::from_entropy();
 
-    send_reply(ctx, |f| f.content(rng.gen_range(min..max + 1).to_string())).await?;
+    send_reply(ctx, |f| f.content(rng.gen_range(min..=max).to_string())).await?;
     Ok(())
 }

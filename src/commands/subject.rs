@@ -17,15 +17,12 @@ pub async fn subject(
     match sub {
         Ok(sub) => {
             send_reply(ctx, |f| {
-                f.content(format!(
-                    "{} at {}\n{}",
-                    Local::now().weekday(),
-                    Local::now().time(),
+                f.content(
                     MessageBuilder::new()
                         .push_safe(format!(
-                            "{} at {}\n",
+                            "{} at <t:{}:T>\n",
                             Local::now().weekday(),
-                            Local::now().time().round_subsecs(0),
+                            Local::now().timestamp(),
                         ))
                         .push_codeblock_safe(sub.timetable_ascii, Some("markdown"),)
                         .push({
@@ -41,11 +38,11 @@ pub async fn subject(
                                         .unwrap()
                                         .timestamp()
                                 ),
-                                None => "".to_string(),
+                                None => "".to_owned(),
                             }
                         })
                         .build(),
-                ))
+            )
             })
             .await
             .unwrap();
