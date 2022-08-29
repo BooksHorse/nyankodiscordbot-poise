@@ -1,5 +1,5 @@
 //use anyhow::Error;
-use chrono::{Datelike, FixedOffset, Local, NaiveDateTime, SubsecRound, TimeZone};
+use chrono::{Datelike, Local, TimeZone, Utc};
 use poise::{send_reply, serenity_prelude::MessageBuilder};
 
 use crate::{Context, Error};
@@ -10,9 +10,10 @@ pub async fn subject(
     #[description = "Room without slashes (312)"]
     #[min = 101]
     #[max = 614]
-    room: Option<u16>,
+    room: Option<u16>
+
 ) -> Result<(), Error> {
-    let sub = subjectlib::subject(Local::now().time(), room.unwrap_or(312)).await;
+    let sub = subjectlib::subject(Utc::now(), room.unwrap_or(312)).await;
     //Local::now().time() //mocktime :NaiveTime::from_hms(10,20,0)
     match sub {
         Ok(sub) => {
@@ -24,25 +25,20 @@ pub async fn subject(
                             Local::now().weekday(),
                             Local::now().timestamp(),
                         ))
-                        .push_codeblock_safe(sub.timetable_ascii, Some("markdown"),)
+                        .push_codeblock_safe(sub.timetable_ascii, Some("markdown"))
                         .push({
                             match sub.current_subject {
                                 Some(e) => format!(
                                     "{} ends in: <t:{}:R>",
                                     &e.name,
-                                    FixedOffset::east(7 * 3600)
-                                        .from_local_datetime(&NaiveDateTime::new(
-                                            Local::now().date().naive_local(),
-                                            e.time_end
-                                        ))
-                                        .unwrap()
+                                    Utc::now()
                                         .timestamp()
                                 ),
                                 None => "".to_owned(),
                             }
                         })
                         .build(),
-            )
+                )
             })
             .await
             .unwrap();

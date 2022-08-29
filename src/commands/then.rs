@@ -4,8 +4,9 @@ use poise::{
     send_reply,
     serenity_prelude::{content_safe, ContentSafeOptions},
 };
+use thenconvert::Thenconvert;
 
-#[poise::command(context_menu_command = "TH to EN", reuse_response, guild_only)]
+#[poise::command(context_menu_command = "TH to EN", track_edits)]
 pub async fn then_msg(
     ctx: Context<'_>,
     #[description = "Message to convert"] msg: serenity::Message,
@@ -39,8 +40,8 @@ pub async fn then_msg(
             })
             .field(
                 &msgargs,
-                thenconvert::th_to_en(&msgargs)
-                    .unwrap()
+                &msgargs
+                    .th_to_en()
                     .replace('@', r#"\@"#)
                     .replace('`', r#"\`"#)
                     .replace('_', r#"\_"#)
@@ -57,7 +58,7 @@ pub async fn then_msg(
     Ok(())
 }
 
-#[poise::command(context_menu_command = "EN to TH", reuse_response, guild_only)]
+#[poise::command(context_menu_command = "EN to TH", track_edits)]
 pub async fn enth_msg(
     ctx: Context<'_>,
     #[description = "Message to convert"] msg: serenity::Message,
@@ -91,8 +92,8 @@ pub async fn enth_msg(
             })
             .field(
                 &msgargs,
-                thenconvert::en_to_th(&msgargs)
-                    .unwrap()
+                &msgargs
+                    .en_to_th()
                     .replace('@', r#"\@"#)
                     .replace('`', r#"\`"#)
                     .replace('_', r#"\_"#)
@@ -109,7 +110,7 @@ pub async fn enth_msg(
     Ok(())
 }
 /// TH to EN Keyboard conversion
-#[poise::command(slash_command, reuse_response, guild_only, rename = "then")]
+#[poise::command(slash_command, prefix_command, rename = "then", track_edits)]
 pub async fn then_text(
     ctx: Context<'_>,
     #[description = "Text to convert"] text: String,
@@ -143,8 +144,8 @@ pub async fn then_text(
             })
             .field(
                 &msgargs,
-                thenconvert::th_to_en(&msgargs)
-                    .unwrap()
+                &msgargs
+                    .th_to_en()
                     .replace('@', r#"\@"#)
                     .replace('`', r#"\`"#)
                     .replace('_', r#"\_"#)
@@ -162,7 +163,7 @@ pub async fn then_text(
 }
 
 /// EN to TH Keyboard conversion
-#[poise::command(slash_command, reuse_response, guild_only, rename = "enth")]
+#[poise::command(slash_command, prefix_command, track_edits, rename = "enth")]
 pub async fn enth_text(
     ctx: Context<'_>,
     #[description = "Text to convert"] text: String,
@@ -195,8 +196,8 @@ pub async fn enth_text(
             })
             .field(
                 &msgargs,
-                thenconvert::en_to_th(&msgargs)
-                    .unwrap()
+                &msgargs
+                    .en_to_th()
                     .replace('@', r#"\@"#)
                     .replace('`', r#"\`"#)
                     .replace('_', r#"\_"#)

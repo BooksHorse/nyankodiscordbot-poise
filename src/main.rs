@@ -6,6 +6,7 @@ extern crate tracing;
 
 use std::env;
 use std::sync::Arc;
+use std::time::Duration;
 
 mod commands;
 
@@ -17,39 +18,79 @@ use commands::then;
 use commands::uwu;
 use poise::async_trait;
 use poise::serenity_prelude::ApplicationCommand;
+
 use poise::serenity_prelude::EventHandler;
-use poise::serenity_prelude::Ready;
+
 use poise::serenity_prelude::RwLock;
 use poise::serenity_prelude::ShardManager;
 use poise::serenity_prelude::TypeMapKey;
 use poise::serenity_prelude::UserId;
+use poise::serenity_prelude::VoiceState;
 use serenity::http::Http;
 
 //use songbird::serenity::SerenityInit;
 
 use serenity::model::gateway::GatewayIntents;
-use std::sync::mpsc::channel;
 
 
 struct KillCommand;
 
 impl TypeMapKey for KillCommand {
-  type Value = Arc<RwLock<ShardManager>>;
+    type Value = Arc<RwLock<ShardManager>>;
 }
 
 #[async_trait]
 impl EventHandler for Handler {
+    // async fn ready(&self,ctx:poise::serenity_prelude::Context,data_about_bot:Ready) {
 
-// async fn ready(&self,ctx:poise::serenity_prelude::Context,data_about_bot:Ready) {
+    //     tokio::spawn(async move {
+    //         wait_shutdown().await.unwrap();
+    //         ctx.shard.shutdown_clean();
+    //       });
 
+    // }
 
-//     tokio::spawn(async move {
-//         wait_shutdown().await.unwrap();
-//         ctx.shard.shutdown_clean();
-//       });
-
-// }
-
+    async fn voice_state_update(
+        //no one in vc
+        &self,
+        ctx: poise::serenity_prelude::Context,
+        _old_voice_state: Option<VoiceState>,
+        new_voice_state: VoiceState,
+    ) {
+        tokio::time::sleep(Duration::from_secs(30)).await;
+        if new_voice_state.channel_id == None {
+            let manager = songbird::get(&ctx)
+                .await
+                .expect("Songbird Voice client placed in at initialisation.")
+                .clone();
+            let mut has_handler = false;
+            let r = match manager.get(new_voice_state.guild_id.unwrap()) {
+                Some(call_mutex) => {
+                    has_handler = true;
+                    call_mutex.lock().await.current_channel().unwrap()
+                }
+                None => return,
+            };
+            match &ctx.cache.channel(r.0).unwrap() {
+                serenity::model::channel::Channel::Guild(guild_channel) => {
+                    if guild_channel.members(&ctx.cache).await.unwrap().len() - 1 == 0 {
+                        if has_handler {
+                            if let Err(guild_channel) =
+                                manager.remove(new_voice_state.guild_id.unwrap()).await
+                            {
+                                error!("{:?}", guild_channel);
+                            }
+                        }
+                    } else {
+                        //info!("voice channel user isn't 0: dont disconnect");
+                        return;
+                    }
+                }
+                _ => return,
+            }
+        }
+        //println!("{:#?} || {:#?}",new,guild)
+    }
 }
 
 pub struct Data {
@@ -113,6 +154,7 @@ async fn main() -> Result<(), Error> {
             music::skip(),
             music::stop(),
             music::leave(),
+            music::r#loop(),
             subject::subject(),
             random::random(),
             poise::Command {
@@ -123,6 +165,7 @@ async fn main() -> Result<(), Error> {
         on_error: |error| Box::pin(on_error(error)),
         prefix_options: poise::PrefixFrameworkOptions {
             prefix: Some(".".into()),
+            edit_tracker: Some(poise::EditTracker::for_timespan(Duration::from_secs(3600))),
             ..poise::PrefixFrameworkOptions::default()
         },
         ..poise::FrameworkOptions::default()
@@ -137,18 +180,12 @@ async fn main() -> Result<(), Error> {
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
-
-
-
-  
-
-
-     poise::Framework::build()
+    poise::Framework::build()
         .token(token)
         .intents(GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT)
         .user_data_setup(move |ctx, _ready, framework| {
-            let shard_manager = framework.shard_manager();
-            let f = ctx.data.write();
+            let _shard_manager = framework.shard_manager();
+            let _f = ctx.data.write();
             Box::pin(async move {
                 Ok(Data {
                     owner_id: UserId(313142847375278091),
@@ -184,18 +221,18 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
 use tokio::signal::unix::{signal, SignalKind};
 #[cfg(target_os = "linux")]
 async fn wait_shutdown() -> Result<(), Box<dyn std::error::Error>> {
-  let mut a = signal(SignalKind::interrupt())?;
-  let mut b = signal(SignalKind::terminate())?;
-  let mut c = signal(SignalKind::quit())?;
-  tokio::select! {
-      _ = a.recv() => {Ok(())},
-      _ = b.recv() => {Ok(())},
-      _ = c.recv() => {Ok(())}
-  }
+    let mut a = signal(SignalKind::interrupt())?;
+    let mut b = signal(SignalKind::terminate())?;
+    let mut c = signal(SignalKind::quit())?;
+    tokio::select! {
+        _ = a.recv() => {Ok(())},
+        _ = b.recv() => {Ok(())},
+        _ = c.recv() => {Ok(())}
+    }
 }
 
 #[cfg(target_os = "windows")]
 async fn wait_shutdown() -> Result<(), Box<dyn std::error::Error>> {
-  tokio::signal::ctrl_c().await.unwrap(); //no sigterm handler
-  Ok(())
+    tokio::signal::ctrl_c().await.unwrap(); //no sigterm handler
+    Ok(())
 }

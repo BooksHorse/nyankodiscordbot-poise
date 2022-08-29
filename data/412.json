@@ -1,0 +1,173 @@
+{
+  "days": [
+    {
+      "day": "Monday",
+      "class": [
+        { "name": "ฟิสิกส์", "time_start": "08:20:00", "time_end": "09:10:00" },
+        {
+          "name": "ฟิสิกส์",
+          "time_start": "09:10:00",
+          "time_end": "10:00:00"
+        },
+        {
+          "name": "ชีวะ",
+          "time_start": "10:00:00",
+          "time_end": "10:50:00"
+        },
+        { "name": "ชีวะ", "time_start": "10:50:00", "time_end": "11:40:00" },
+        {
+          "name": "พัก",
+          "time_start": "11:40:00",
+          "time_end": "12:30:00"
+        },
+        {
+          "name": "คณิตเพิ่ม",
+          "time_start": "12:30:00",
+          "time_end": "13:20:00"
+        },
+        { "name": "เคมี", "time_start": "13:20:00", "time_end": "14:10:00" },
+        {
+          "name": "อังกฤษเสริม",
+          "time_start": "14:10:00",
+          "time_end": "15:00:00"
+        },
+        { "name": "IS", "time_start": "15:00:00", "time_end": "15:50:00" }
+      ]
+    },
+    {
+      "day": "Tuesday",
+      "class": [
+        {
+          "name": "พละ",
+          "time_start": "08:20:00",
+          "time_end": "09:10:00"
+        },
+        {
+          "name": "คณิตหลัก",
+          "time_start": "09:10:00",
+          "time_end": "10:00:00"
+        },
+        {
+          "name": "คณิตเพิ่ม",
+          "time_start": "10:00:00",
+          "time_end": "10:50:00"
+        },
+        {
+          "name": "วิทย์หลัก",
+          "time_start": "10:50:00",
+          "time_end": "11:40:00"
+        },
+        { "name": "พัก", "time_start": "11:40:00", "time_end": "12:30:00" },
+        { "name": "ประวัติ", "time_start": "12:30:00", "time_end": "13:20:00" },
+        {
+          "name": "อังกฤษหลัก",
+          "time_start": "13:20:00",
+          "time_end": "14:10:00"
+        },
+        { "name": "สังคม", "time_start": "14:10:00", "time_end": "15:00:00" },
+        { "name": "แนะแนว", "time_start": "15:00:00", "time_end": "15:50:00" }
+      ]
+    },
+    {
+      "day": "Wednesday",
+      "class": [
+        {
+          "name": "สุขศึกษา",
+          "time_start": "08:20:00",
+          "time_end": "09:10:00"
+        },
+        {
+          "name": "ไทย",
+          "time_start": "09:10:00",
+          "time_end": "10:00:00"
+        },
+        {
+          "name": "คณิตเพิ่ม",
+          "time_start": "10:00:00",
+          "time_end": "10:50:00"
+        },
+        {
+          "name": "เทคโนโลยี",
+          "time_start": "10:50:00",
+          "time_end": "11:40:00"
+        },
+        { "name": "พัก", "time_start": "11:40:00", "time_end": "12:30:00" },
+        { "name": "ฟิสิกส์", "time_start": "12:30:00", "time_end": "13:20:00" },
+        {
+          "name": "ฟิสิกส์",
+          "time_start": "13:20:00",
+          "time_end": "14:10:00"
+        },
+        { "name": "ศิลปะ", "time_start": "14:10:00", "time_end": "15:00:00" },
+        { "name": "IS", "time_start": "15:00:00", "time_end": "15:50:00" }
+      ]
+    },
+    {
+      "day": "Thursday",
+      "class": [
+        {
+          "name": "อังกฤษเสริม",
+          "time_start": "08:20:00",
+          "time_end": "09:10:00"
+        },
+        {
+          "name": "สังคม",
+          "time_start": "09:10:00",
+          "time_end": "10:00:00"
+        },
+        {
+          "name": "วิทย์หลัก",
+          "time_start": "10:00:00",
+          "time_end": "10:50:00"
+        },
+        {
+          "name": "วิทย์หลัก",
+          "time_start": "10:50:00",
+          "time_end": "11:40:00"
+        },
+        { "name": "พัก", "time_start": "11:40:00", "time_end": "12:30:00" },
+        {
+          "name": "คณิตหลัก",
+          "time_start": "12:30:00",
+          "time_end": "13:20:00"
+        },
+        {
+          "name": "ชีวะ",
+          "time_start": "13:20:00",
+          "time_end": "14:10:00"
+        },
+        { "name": "โครงงาน", "time_start": "14:10:00", "time_end": "15:00:00" },
+        { "name": "โครงงาน", "time_start": "15:00:00", "time_end": "15:50:00" }
+      ]
+    },
+    {
+      "day": "Friday",
+      "class": [
+        {
+          "name": "เคมี",
+          "time_start": "08:20:00",
+          "time_end": "09:10:00"
+        },
+        {
+          "name": "เคมี",
+          "time_start": "09:10:00",
+          "time_end": "10:00:00"
+        },
+        {
+          "name": "อังกฤษหลัก",
+          "time_start": "10:00:00",
+          "time_end": "10:50:00"
+        },
+        { "name": "ไทย", "time_start": "10:50:00", "time_end": "11:40:00" },
+        { "name": "พัก", "time_start": "11:40:00", "time_end": "12:30:00" },
+        { "name": "การงาน", "time_start": "12:30:00", "time_end": "13:20:00" },
+        {
+          "name": "ชุมนุม",
+          "time_start": "13:20:00",
+          "time_end": "14:10:00"
+        },
+        { "name": "คุณธรรม", "time_start": "14:10:00", "time_end": "15:00:00" }
+      ]
+    }
+  ]
+}

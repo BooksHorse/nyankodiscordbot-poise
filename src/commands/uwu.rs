@@ -13,7 +13,7 @@ pub async fn uwuify(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 ///Minimum level of uwuness
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, track_edits)]
 pub async fn uwu(
     ctx: Context<'_>,
     #[description = "Text to UwUify"] text: String,
@@ -23,7 +23,7 @@ pub async fn uwu(
 }
 
 ///Medium level of uwuness
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, track_edits)]
 pub async fn owo(
     ctx: Context<'_>,
     #[description = "Text to OwOify"] text: String,
@@ -32,7 +32,7 @@ pub async fn owo(
     Ok(())
 }
 ///Maximum level of uwuness
-#[poise::command(slash_command, prefix_command)]
+#[poise::command(slash_command, prefix_command, track_edits)]
 pub async fn uvu(
     ctx: Context<'_>,
     #[description = "Text to UvUify"] text: String,

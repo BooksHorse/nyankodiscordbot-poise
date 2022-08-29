@@ -1,8 +1,24 @@
 use poise::{send_reply, serenity_prelude::Mentionable};
-use songbird::{error::JoinError, input::Restartable};
+use songbird::{error::JoinError, input::Restartable, Call, tracks::{LoopState, TrackError}};
+use tokio::sync::MutexGuard;
 use url::Url;
 
 use crate::{Context, Error};
+
+
+use thiserror::Error;
+#[derive(Error, Debug)]
+
+#[error("Failed to set loop {onoff:?}: {why:?}")]
+pub enum LoopError {
+    LoopError {
+    onoff:String,why:TrackError
+}
+}
+
+
+
+
 /// Play songs in YouTube
 ///
 /// /play [URL,Search]
@@ -44,7 +60,13 @@ pub async fn play_internal(ctx: Context<'_>, query: String) -> Result<(), Error>
         let mut handler = handler_lock.lock().await;
 
         if let Ok(url) = Url::parse(&query) {
-            if  ["youtube.com","youtu.be","www.youtube.com","m.youtube.com"].contains(&url.host_str().unwrap())
+            if [
+                "youtube.com",
+                "youtu.be",
+                "www.youtube.com",
+                "m.youtube.com",
+            ]
+            .contains(&url.host_str().unwrap())
             {
                 let source = match Restartable::ytdl(url, true).await {
                     Ok(source) => source,
@@ -316,7 +338,11 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
                     .title
                     .clone()
                     .unwrap_or_else(|| "Unknown Title".to_owned())),
-                humantime::format_duration(i.metadata().duration.unwrap_or(std::time::Duration::new(0,0)))
+                humantime::format_duration(
+                    i.metadata()
+                        .duration
+                        .unwrap_or(std::time::Duration::new(0, 0))
+                )
             ));
         }
         send_reply(ctx, |f| f.content(uwu.join("\n")))
@@ -330,3 +356,62 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
         Ok(())
     }
 }
+
+
+#[poise::command(prefix_command, slash_command, guild_only)]
+pub async fn r#loop(ctx: Context<'_>,#[description = "true = loop , false = no loop"]r#loop:bool) -> Result<(), Error> {
+    let guild = ctx.guild().unwrap();
+    let guild_id = guild.id;
+    let manager = songbird::get(ctx.discord())
+        .await
+        .expect("Songbird Voice client placed in at initialisation.")
+        .clone();
+
+    if let Some(handler_lock) = manager.get(guild_id) {
+        let handler = handler_lock.lock().await;
+        let d = match r#loop {
+            true => LoopState::Infinite,
+            false => LoopState::Finite(0)
+        };
+loop_internal(ctx,handler,d).await?;
+Ok(())
+    }
+    else {
+        send_reply(ctx, |f| f.content("Not in voice channel"))
+        .await
+        .unwrap();
+    Ok(())
+    }
+
+}
+
+
+
+async fn loop_internal(
+    _ctx: Context<'_>,
+    handler: MutexGuard<'_, Call>,
+    onoff: LoopState,
+  ) -> Result<String, LoopError> {
+    match onoff {
+      _Infinite => match handler.queue().current().unwrap().enable_loop() {
+        Ok(_) => Ok("loop on".to_string()),
+        Err(why) => Err(LoopError::LoopError {
+          onoff: "on".into(),
+          why,
+        }),
+      },
+      _ => match handler.queue().current().unwrap().disable_loop() {
+        Ok(_) => Ok("loop off".to_string()),
+        Err(why) => Err(LoopError::LoopError {
+          onoff: "off".into(),
+          why,
+        }),
+      },
+    }
+  
+    // let repeat = getloop(handler).await;
+    // if repeat == Infinite {
+    //     msg.channel_id.say(ctx,"loop on");
+    // }
+  }
+  
