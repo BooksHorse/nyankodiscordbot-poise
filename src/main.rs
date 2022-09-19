@@ -17,7 +17,9 @@ use commands::then;
 
 use commands::uwu;
 use poise::async_trait;
-use poise::serenity_prelude::ApplicationCommand;
+use poise::serenity_prelude::GatewayIntents;
+use poise::serenity_prelude::Http;
+use poise::serenity_prelude::application::command::Command;
 
 use poise::serenity_prelude::EventHandler;
 
@@ -26,11 +28,8 @@ use poise::serenity_prelude::ShardManager;
 use poise::serenity_prelude::TypeMapKey;
 use poise::serenity_prelude::UserId;
 use poise::serenity_prelude::VoiceState;
-use serenity::http::Http;
 
 //use songbird::serenity::SerenityInit;
-
-use serenity::model::gateway::GatewayIntents;
 
 
 struct KillCommand;
@@ -72,7 +71,7 @@ impl EventHandler for Handler {
                 None => return,
             };
             match &ctx.cache.channel(r.0).unwrap() {
-                serenity::model::channel::Channel::Guild(guild_channel) => {
+                model::channel::Channel::Guild(guild_channel) => {
                     if guild_channel.members(&ctx.cache).await.unwrap().len() - 1 == 0 {
                         if has_handler {
                             if let Err(guild_channel) =
@@ -116,7 +115,7 @@ async fn register(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
 async fn unregister(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
     if global {
         ctx.say("Unregistering commands globally").await?;
-        ApplicationCommand::set_global_application_commands(ctx.discord(), |b| {
+        Command::set_global_application_commands(ctx.discord(), |b| {
             b.set_application_commands(vec![])
         })
         .await?;
@@ -180,7 +179,7 @@ async fn main() -> Result<(), Error> {
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
-    poise::Framework::build()
+    poise::Framework::builder()
         .token(token)
         .intents(GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT)
         .user_data_setup(move |ctx, _ready, framework| {
@@ -217,6 +216,7 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     }
 }
 
+use poise::serenity_prelude::model;
 #[cfg(target_os = "linux")]
 use tokio::signal::unix::{signal, SignalKind};
 #[cfg(target_os = "linux")]
