@@ -1,2 +1,6 @@
 syntax = "proto3";
 package nyanko;
+
+service Music {
+  rpc Play (PlayRequest)
+}
