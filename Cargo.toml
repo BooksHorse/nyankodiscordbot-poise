@@ -6,13 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-poise = "0.3.0"
+poise = "0.6.0"
 tokio = { version = "1.18.2", features = ["rt-multi-thread", "macros","full"] }
 url = { version = "2.2.2", features = ["serde"] }
-songbird = {version="0.3.0",features = [
+songbird = {version="0.4.0",features = [
         "gateway",
     "serenity",
-    "builtin-queue"
+    "builtin-queue","driver"
 ]}
 # songbird = { git = "https://github.com/serenity-rs/songbird.git", branch = "next", features = [
 #     "gateway",
@@ -28,6 +28,13 @@ rand_chacha = "0.3.1"
 owoify_rs = "1.0.0"
 humantime = "2.1.0"
 chrono = "0.4.19"
+reqwest = "0.11.0"
+youtube_dl = "0.10.0"
+
+
+[dependencies.symphonia]
+version = "0.5"
+features = ["aac", "mp3", "isomp4", "alac"]
 # [patch.crates-io]
 # serenity = { git = "https://github.com/serenity-rs/serenity.git", branch = "next" }
 

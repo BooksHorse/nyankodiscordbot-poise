@@ -1,14 +1,14 @@
 use owoify_rs::{Owoifiable, OwoifyLevel};
 use poise::{
     send_reply,
-    serenity_prelude::{content_safe, Colour, ContentSafeOptions},
+    serenity_prelude::{content_safe, Colour, ContentSafeOptions, CreateEmbed, CreateEmbedAuthor}, CreateReply,
 };
 
 use crate::{Context, Error};
 ///Convert text to UwU
 #[poise::command(slash_command)]
 pub async fn uwuify(ctx: Context<'_>) -> Result<(), Error> {
-    send_reply(ctx, |m| m.content("hehe")).await?;
+    send_reply(ctx, CreateReply::default().content("hehe")).await?;
     Ok(())
 }
 
@@ -61,17 +61,13 @@ async fn uwoh(ctx: Context<'_>, text: String, owoify_level: OwoifyLevel) -> Resu
         },
     );
     let msgargs = content_safe(&ctx.discord().cache, text, &settings, &[]);
-    send_reply(ctx, |m| {
-        m.embed(|e| {
-            e.author(|a| {
-                a.name(&ctx.author().name)
+    send_reply(ctx, CreateReply::default().embed(CreateEmbed::default().author(CreateEmbedAuthor::new(&ctx.author().name)
                     .icon_url(&ctx.author().avatar_url().unwrap_or_else(|| "".to_owned()))
-            })
+            )
             .field(&msgargs, msgargs.owoify(owoify_level), true)
             .color(Colour::from_rgb(242, 153, 169))
-            .description(format!("type: {:?}", owoify_level))
-        })
-    })
+            .description(format!("type: {:?}", owoify_level)))
+        )
     .await?;
     Ok(())
 }
