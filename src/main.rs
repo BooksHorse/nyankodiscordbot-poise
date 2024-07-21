@@ -16,12 +16,12 @@ use commands::music;
 // use commands::then;
 
 use commands::uwu;
+use commands::vc;
 use poise::async_trait;
 use poise::serenity_prelude::prelude::*;
 use poise::serenity_prelude::*;
 
 //use songbird::serenity::SerenityInit;
-
 
 struct KillCommand;
 
@@ -64,11 +64,10 @@ impl EventHandler for Handler {
             };
             let channels = guild_id.channels(&ctx).await.unwrap();
             let channel = channels.get(&ChannelId::from(channel_id.0)).unwrap();
-            
-            
+
             match channel.kind {
                 ChannelType::Voice => {
-                    if channel.members(&ctx.clone().cache).unwrap().len() - 1 == 0 {
+                    if channel.members(&ctx.cache.clone()).unwrap().len() - 1 == 0 {
                         if has_handler {
                             if let Err(guild_channel) =
                                 manager.remove(new_voice_state.guild_id.unwrap()).await
@@ -90,7 +89,7 @@ impl EventHandler for Handler {
 
 pub struct Data {
     owner_id: UserId,
-    reqwest_client:Arc<Mutex<reqwest::Client>>
+    reqwest_client: Arc<Mutex<reqwest::Client>>,
 }
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -112,18 +111,14 @@ async fn register(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
 async fn unregister(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
     if global {
         ctx.clone().say("Unregistering commands globally").await?;
-        Command::set_global_commands(ctx.clone(), vec![])
-        .await?;
+        Command::set_global_commands(ctx.clone(), vec![]).await?;
     } else {
         let guild = ctx.partial_guild().await;
         if let None = guild {
             ctx.say("Must be called in guild").await?;
         }
         ctx.say("Unregistering commands").await?;
-        let a = guild.unwrap().clone()
-            .set_commands(ctx, vec![])
-            .await?;
-
+        let a = guild.unwrap().clone().set_commands(ctx, vec![]).await?;
     }
     Ok(())
 }
@@ -148,6 +143,14 @@ async fn main() -> Result<(), Error> {
             music::stop(),
             music::leave(),
             music::r#loop(),
+            poise::Command {
+                subcommands: vec![
+            vc::vcdisconnect(),
+            vc::vcmove(),
+                ],
+                subcommand_required:true,
+                ..vc::vc()
+            },
             // subject::subject(),
             // random::random(),
             poise::Command {
@@ -183,24 +186,28 @@ async fn main() -> Result<(), Error> {
             Box::pin(async move {
                 Ok(Data {
                     owner_id: UserId::new(313142847375278091),
-                    reqwest_client:Arc::new(Mutex::new(client)),
+                    reqwest_client: Arc::new(Mutex::new(client)),
                 })
             })
         })
-        .options(options).build();
-        // .client_settings(songbird::SerenityInit::register_songbird)
-        // .run()
-        // .await
-        // .unwrap();
-    
-    let mut client = Client::builder(&token, GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT)
+        .options(options)
+        .build();
+    // .client_settings(songbird::SerenityInit::register_songbird)
+    // .run()
+    // .await
+    // .unwrap();
+
+    let mut client = Client::builder(
+        &token,
+        GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT,
+    )
     .event_handler(Handler)
     .register_songbird()
     .framework(framework)
     .await?;
-client.start().await.unwrap();
+    client.start().await.unwrap();
 
-Ok(())
+    Ok(())
 }
 
 async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
@@ -208,15 +215,15 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     // They are many errors that can occur, so we only handle the ones we want to customize
     // and forward the rest to the default handler
     match error {
-        poise::FrameworkError::Setup { error,.. } => panic!("Failed to start bot: {:?}", error),
-        poise::FrameworkError::Command { error, ctx,.. } => {
+        poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
+        poise::FrameworkError::Command { error, ctx, .. } => {
             println!("Error in command `{}`: {:?}", ctx.command().name, error,);
         }
         error => {
             if let Err(why) = poise::builtins::on_error(error).await {
                 println!("Error while handling error: {}", why);
             }
-        },
+        }
         _ => {}
     }
 }
