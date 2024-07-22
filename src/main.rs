@@ -10,6 +10,7 @@ use std::time::Duration;
 
 mod commands;
 
+use commands::code;
 use commands::music;
 // use commands::random;
 // use commands::subject;
@@ -143,6 +144,7 @@ async fn main() -> Result<(), Error> {
             music::stop(),
             music::leave(),
             music::r#loop(),
+            code::check_code(),
             poise::Command {
                 subcommands: vec![
             vc::vcdisconnect(),
