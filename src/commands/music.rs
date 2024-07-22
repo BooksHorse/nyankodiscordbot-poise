@@ -1,15 +1,10 @@
 use std::sync::{Arc, Mutex};
 
-use chrono::Duration;
-use poise::{
-    send_reply,
-    serenity_prelude::{model::channel, ChannelType, Mentionable},
-    CreateReply,
-};
+use poise::{send_reply, CreateReply};
 use songbird::{
     error::{ControlError, JoinError},
     input::{AuxMetadata, Compose},
-    tracks::{LoopState, Track},
+    tracks::LoopState,
     typemap::TypeMapKey,
     Call,
 };
@@ -37,14 +32,14 @@ pub async fn play(
     ctx.defer().await?;
     // TODO:check if url or search
 
-    let manager = songbird::get(ctx.clone().serenity_context())
+    let manager = songbird::get(ctx.serenity_context())
         .await
         .expect("Songbird Voice client placed in at initialisation.")
         .clone();
 
     if manager.get(ctx.guild_id().unwrap()).is_none() {
         // not in voice channel
-        join_internal(ctx.clone()).await?;
+        join_internal(ctx).await?;
     }
     if let Ok(url) = Url::parse(&query) {
         // if is URL
@@ -56,43 +51,36 @@ pub async fn play(
             "music.youtube.com",
         ]
         .contains(&url.host_str().unwrap())
-        // if YouTube
+            && query.contains("playlist")
         {
-            if query.contains("playlist") {
-                let playlist = YoutubeDl::new(url)
-                    .youtube_dl_path("yt-dlp")
-                    .flat_playlist(true)
-                    .run()
-                    .unwrap()
-                    .into_playlist()
-                    .unwrap();
-                let mut queue_msgs: Vec<String> = vec![];
-                let handle =
-                    send_reply(ctx, CreateReply::default().content("Loading Playlist")).await?;
-                for youtube_video in playlist.entries.unwrap().iter() {
-                    queue_msgs.push(
-                        play_internal(ctx.clone(), youtube_video.url.to_owned().unwrap()).await?,
-                    );
-                    handle
-                        .edit(
-                            ctx,
-                            CreateReply::default()
-                                .content("Loading Playlist")
-                                .content(queue_msgs.join("\n")),
-                        )
-                        .await;
-                }
-                return Ok(());
-            };
+            let playlist = YoutubeDl::new(url)
+                .youtube_dl_path("yt-dlp")
+                .flat_playlist(true)
+                .run()
+                .unwrap()
+                .into_playlist()
+                .unwrap();
+            let mut queue_msgs: Vec<String> = vec![];
+            let handle =
+                send_reply(ctx, CreateReply::default().content("Loading Playlist")).await?;
+            for youtube_video in &playlist.entries.unwrap() {
+                queue_msgs.push(play_internal(ctx, youtube_video.url.clone().unwrap()).await?);
+                let _ = handle
+                    .edit(
+                        ctx,
+                        CreateReply::default()
+                            .content("Loading Playlist")
+                            .content(queue_msgs.join("\n")),
+                    )
+                    .await;
+            }
+            return Ok(());
         }
     }
 
-    send_reply(
+    let _ = send_reply(
         ctx,
-        CreateReply::default().content(format!(
-            "Playing {}",
-            play_internal(ctx.clone(), query).await?
-        )),
+        CreateReply::default().content(format!("Playing {}", play_internal(ctx, query).await?)),
     )
     .await;
 
@@ -115,7 +103,7 @@ pub async fn play_internal(ctx: Context<'_>, query: String) -> Result<String, Er
         .clone();
 
     if let Some(handler_lock) = manager.get(ctx.guild_id().unwrap()) {
-        let mut handler = handler_lock.lock().await;
+        
 
         if let Ok(url) = Url::parse(&query) {
             if [
@@ -147,11 +135,12 @@ pub async fn play_internal(ctx: Context<'_>, query: String) -> Result<String, Er
                     .aux_metadata()
                     .await
                     .inspect(|m| {
-                        title = m.title.clone().unwrap_or("Unknown Title".to_owned());
+                        title = m.title.clone().unwrap_or_else(|| "Unknown Title".to_owned());
                     })
                     .unwrap();
                 // let track:Track = source.into();
-                let mut channel_id;
+                {
+                let mut handler = handler_lock.lock().await;
                 if handler.queue().current().is_none() {
                     let handle = handler.enqueue_input(source.into()).await;
                     let mut data = handle.typemap().write().await;
@@ -167,30 +156,17 @@ pub async fn play_internal(ctx: Context<'_>, query: String) -> Result<String, Er
                     let mut data = handle.typemap().write().await;
                     data.insert::<SongData>(metadata.clone());
                 };
-                channel_id = ctx
-                    .guild()
-                    .unwrap()
-                    .voice_states
-                    .get(&ctx.author().id)
-                    .and_then(|voice_state| voice_state.channel_id);
-
-                // if let Ok(data) = source.clone().aux_metadata().await {
-                //     title=data.title.unwrap();
-                // }
-
-                // send_reply(ctx, CreateReply::default().content(format!("Playing `{}` in <#{}>", title, channel_id.unwrap())))
-                // .await?;
+                }
                 info!("playing {} in {}", title, ctx.guild().unwrap().name);
-                return Ok(format!("`{}` by {}", title, metadata.channel.unwrap()));
+                Ok(format!("`{}` by {}", title, metadata.channel.unwrap()))
             } else {
-                return Ok("Support only YouTube URL".to_owned());
-                // send_reply(ctx, CreateReply::default().content("Support only YouTube")).await?;
+                Ok("Support only YouTube URL".to_owned())
             }
         } else {
-            return Ok("Support only Youtube URL".to_owned());
+            Ok("Support only Youtube URL".to_owned())
         }
     } else {
-        return Ok("Failed to get guild.".to_owned());
+        Ok("Failed to get guild.".to_owned())
     }
 
     // Ok(())
@@ -209,20 +185,15 @@ pub async fn join(ctx: Context<'_>) -> Result<(), Error> {
         .get(&ctx.author().clone().id)
         .and_then(|voice_state| voice_state.channel_id);
 
-    let connect_to = match channel_id {
-        Some(channel) => channel,
-        None => return Err(Box::new(JoinError::NoCall)),
-    };
-
     let manager = songbird::get(ctx.serenity_context())
         .await
         .expect("Songbird Voice client placed in at initialisation.")
         .clone();
     match manager
-        .join(ctx.guild_id().unwrap(), channel_id.unwrap().clone())
+        .join(ctx.guild_id().unwrap(), channel_id.unwrap())
         .await
     {
-        Ok(k) => info!("{}", format!("Joined")),
+        Ok(_k) => info!("{}", format!("Joined")),
         Err(k) => error!("Err!: {:?}", k),
     };
     // if success.is_ok() {
@@ -241,7 +212,7 @@ pub async fn join_internal(ctx: Context<'_>) -> Result<(), Error> {
         .get(&ctx.author().clone().id)
         .and_then(|voice_state| voice_state.channel_id);
 
-    let connect_to = match channel_id {
+    let _connect_to = match channel_id {
         Some(channel) => channel,
         None => return Err(Box::new(JoinError::NoCall)),
     };
@@ -251,8 +222,8 @@ pub async fn join_internal(ctx: Context<'_>) -> Result<(), Error> {
         .expect("Songbird Voice client placed in at initialisation.")
         .clone();
 
-    match manager.join(guild.id, channel_id.unwrap().clone()).await {
-        Ok(k) => info!("{}", format!("Joined ")),
+    match manager.join(guild.id, channel_id.unwrap()).await {
+        Ok(_k) => info!("{}", format!("Joined ")),
         Err(k) => error!("Err!: {:?}", k),
     };
 
@@ -276,12 +247,9 @@ pub async fn leave(ctx: Context<'_>) -> Result<(), Error> {
     if has_handler {
         if let Err(why) = manager.remove(guild_id).await {
             error!("{:?}", why);
-            send_reply(
-                ctx,
-                CreateReply::default().content(format!("Err: {:?}", why)),
-            )
-            .await
-            .unwrap();
+            send_reply(ctx, CreateReply::default().content(format!("Err: {why:?}")))
+                .await
+                .unwrap();
         }
 
         send_reply(ctx, CreateReply::default().content("Left voice channel"))
@@ -379,14 +347,15 @@ pub async fn queue(ctx: Context<'_>) -> Result<(), Error> {
             return Ok(());
         }
         let uwu: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(vec![]));
-        let j = uwu.clone();
+        let _j = uwu.clone();
         for i in handler.queue().current_queue() {
-            let s = j.clone();
-            match i.typemap().read().await.get::<SongData>() {
+            let typemap = i.typemap().read().await;
+            let metadata = typemap.get::<SongData>();
+            match  metadata {
                 Some(d) => uwu.lock().unwrap().push(format!(
                     "{} - {}",
-                    d.title.clone().unwrap_or("Unknown Title".to_owned()),
-                    d.channel.clone().unwrap_or("Unknown Channel".to_owned())
+                    d.title.clone().unwrap_or_else(|| "Unknown Title".to_owned()),
+                    d.channel.clone().unwrap_or_else(|| "Unknown Channel".to_owned())
                 )),
                 None => uwu.lock().unwrap().push("unk".to_owned()),
             }
@@ -419,19 +388,18 @@ pub async fn r#loop(
         .clone();
 
     if let Some(handler_lock) = manager.get(guild_id) {
-        let handler = handler_lock.lock().await;
-        let d = match r#loop {
-            true => LoopState::Infinite,
-            false => LoopState::Finite(0),
+        let d = if r#loop {
+            LoopState::Infinite
+        } else {
+            LoopState::Finite(0)
         };
-        loop_internal(ctx, handler, d).await?;
-        Ok(())
+        loop_internal(ctx, handler_lock.lock().await, d).await?;
     } else {
         send_reply(ctx, CreateReply::default().content("Not in voice channel"))
             .await
             .unwrap();
-        Ok(())
     }
+    Ok(())
 }
 
 ///Set volume
@@ -448,12 +416,15 @@ pub async fn volume(
         .clone();
 
     if let Some(handler_lock) = manager.get(guild_id) {
-        let handler = handler_lock.lock().await;
+        
         let volume = volume.clamp(0, 100);
+        {
+            let handler = handler_lock.lock().await;
         handler.queue().current_queue().iter().for_each(|t| {
-            t.set_volume(volume as f32 / 100.0);
+            let _ = t.set_volume(f32::from(volume) / 100.0);
         });
-        ctx.say(format!("Set volume to {}", volume)).await;
+    }
+        let _ = ctx.say(format!("Set volume to {volume}")).await;
     } else {
         send_reply(ctx, CreateReply::default().content("Not in voice channel"))
             .await
@@ -467,34 +438,31 @@ async fn loop_internal(
     handler: MutexGuard<'_, Call>,
     onoff: LoopState,
 ) -> Result<String, LoopError> {
+
+    let queue = handler
+    .queue()
+    .current_queue();
+    let track =     queue.first();
+    track.map_or_else(|| Ok("No Song playing".to_owned()), |track|
     match onoff {
-        _Infinite => match handler
-            .queue()
-            .current_queue()
-            .first()
-            .unwrap()
-            .enable_loop()
+        LoopState::Infinite => match track .enable_loop()
         {
-            Ok(_) => Ok("loop on".to_string()),
+            Ok(()) => Ok("loop on".to_owned()),
             Err(why) => Err(LoopError::LoopError {
                 onoff: "on".into(),
                 why,
             }),
         },
-        _ => match handler
-            .queue()
-            .current_queue()
-            .first()
-            .unwrap()
-            .disable_loop()
+        LoopState::Finite(_) => match track.disable_loop()
         {
-            Ok(_) => Ok("loop off".to_string()),
+            Ok(()) => Ok("loop off".to_owned()),
             Err(why) => Err(LoopError::LoopError {
                 onoff: "off".into(),
                 why,
             }),
         },
     }
+    )
 
     // let repeat = getloop(handler).await;
     // if repeat == Infinite {

@@ -1,10 +1,10 @@
-use owoify_rs::{Owoifiable, OwoifyLevel};
+
 use poise::{
     send_reply,
-    serenity_prelude::{content_safe, ChannelType, Colour, ContentSafeOptions, CreateEmbed, CreateEmbedAuthor},
+    serenity_prelude::ChannelType,
     CreateReply,
 };
-use futures::{ future};
+use futures::future;
 use crate::{Context, Error};
 
 
@@ -17,22 +17,22 @@ pub async fn vcmove(
     
 ) -> Result<(), Error> {
     if old_vc.kind != ChannelType::Voice {
-        ctx.say("Invalid Old Voice Channel").await;
+        let _ = ctx.say("Invalid Old Voice Channel").await;
         return Ok(());
     }
     if new_vc.kind != ChannelType::Voice {
-        ctx.say("Invalid New Voice Channel").await;
+        let _ = ctx.say("Invalid New Voice Channel").await;
         return Ok(());
     }
     if old_vc.id == new_vc.id {
-        ctx.say("Old == New, Cannot move").await;
+        let _ = ctx.say("Old == New, Cannot move").await;
         return Ok(());
     }
     let count = old_vc.members(ctx.cache()).unwrap().len();
     future::join_all(old_vc.members(ctx.cache()).unwrap().iter().map(|member| {
         member.move_to_voice_channel(ctx, &new_vc)
     })).await;
-    ctx.say(format!("Moved {} users",count)).await;
+    let _ = ctx.say(format!("Moved {count} users")).await;
     Ok(())
 }
 
@@ -44,14 +44,14 @@ pub async fn vcdisconnect(
     
 ) -> Result<(), Error> {
     if vc.kind != ChannelType::Voice {
-        ctx.say("Invalid Channel").await;
+        let _ = ctx.say("Invalid Channel").await;
         return Ok(());
     }
     let count = vc.members(ctx.cache()).unwrap().len();
     future::join_all(vc.members(ctx.cache()).unwrap().iter().map(|member| {
         member.disconnect_from_voice(ctx)
     })).await;
-    ctx.say(format!("Disconnected {} users",count)).await;
+    let _ = ctx.say(format!("Disconnected {count} users")).await;
     Ok(())
 }
 

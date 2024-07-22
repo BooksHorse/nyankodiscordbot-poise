@@ -48,12 +48,12 @@ impl EventHandler for Handler {
         new_voice_state: VoiceState,
     ) {
         tokio::time::sleep(Duration::from_secs(30)).await;
-        if new_voice_state.channel_id == None {
+        if new_voice_state.channel_id.is_none() {
             let manager = songbird::get(&ctx)
                 .await
                 .expect("Songbird Voice client placed in at initialisation.")
                 .clone();
-            let mut has_handler = false;
+            let has_handler;
             let guild_id = new_voice_state.guild_id.unwrap();
             let channel_id = match manager.get(guild_id) {
                 Some(call_mutex) => {
@@ -110,15 +110,15 @@ async fn register(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
 #[poise::command(prefix_command, check = "is_owner", hide_in_help)]
 async fn unregister(ctx: Context<'_>, #[flag] global: bool) -> Result<(), Error> {
     if global {
-        ctx.clone().say("Unregistering commands globally").await?;
-        Command::set_global_commands(ctx.clone(), vec![]).await?;
+        ctx.say("Unregistering commands globally").await?;
+        Command::set_global_commands(ctx, vec![]).await?;
     } else {
         let guild = ctx.partial_guild().await;
-        if let None = guild {
+        if guild.is_none() {
             ctx.say("Must be called in guild").await?;
         }
         ctx.say("Unregistering commands").await?;
-        let a = guild.unwrap().clone().set_commands(ctx, vec![]).await?;
+        let _a = guild.unwrap().clone().set_commands(ctx, vec![]).await?;
     }
     Ok(())
 }
@@ -173,7 +173,7 @@ async fn main() -> Result<(), Error> {
 
     let _bot_id = match http.get_current_application_info().await {
         Ok(info) => info.id,
-        Err(why) => panic!("Could not access application info: {:?}", why),
+        Err(why) => panic!("Could not access application info: {why:?}"),
     };
 
     let framework = poise::Framework::builder()
@@ -215,20 +215,19 @@ async fn on_error(error: poise::FrameworkError<'_, Data, Error>) {
     // They are many errors that can occur, so we only handle the ones we want to customize
     // and forward the rest to the default handler
     match error {
-        poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {:?}", error),
+        poise::FrameworkError::Setup { error, .. } => panic!("Failed to start bot: {error:?}"),
         poise::FrameworkError::Command { error, ctx, .. } => {
             println!("Error in command `{}`: {:?}", ctx.command().name, error,);
         }
         error => {
             if let Err(why) = poise::builtins::on_error(error).await {
-                println!("Error while handling error: {}", why);
+                println!("Error while handling error: {why}");
             }
         }
-        _ => {}
     }
 }
 
-use poise::serenity_prelude::model;
+
 use songbird::SerenityInit;
 #[cfg(target_os = "linux")]
 use tokio::signal::unix::{signal, SignalKind};

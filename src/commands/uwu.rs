@@ -61,18 +61,18 @@ async fn uwoh(ctx: Context<'_>, text: String, owoify_level: OwoifyLevel) -> Resu
                 .display_as_member_from(guild_id)
         },
     );
-    let msgargs = content_safe(&ctx.discord().cache, text, &settings, &[]);
+    let msgargs = content_safe(ctx, text, &settings, &[]);
     send_reply(
         ctx,
         CreateReply::default().embed(
             CreateEmbed::default()
                 .author(
                     CreateEmbedAuthor::new(&ctx.author().name)
-                        .icon_url(&ctx.author().avatar_url().unwrap_or_else(|| "".to_owned())),
+                        .icon_url(&ctx.author().avatar_url().unwrap_or_default()),
                 )
                 .field(&msgargs, msgargs.owoify(owoify_level), true)
                 .color(Colour::from_rgb(242, 153, 169))
-                .description(format!("type: {:?}", owoify_level)),
+                .description(format!("type: {owoify_level:?}")),
         ),
     )
     .await?;
